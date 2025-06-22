@@ -1,0 +1,24 @@
+<NVMProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="NVMProfile.xsd">
+    <ProfileVersion>3</ProfileVersion>
+    <CollectorConfiguration>
+        <CollectorIP>nvm.cisco.com</CollectorIP>
+        <Port>4739</Port>
+        <Secure>false</Secure>
+    </CollectorConfiguration>
+    <TemplateReportInterval>120</TemplateReportInterval>
+    <AggInterval>5</AggInterval>
+    <ThrottleRate>500</ThrottleRate>
+    <CollectionMode>all</CollectionMode>
+    <CollectionCriteria>
+        <Broadcast>true</Broadcast>
+        <Multicast>true</Multicast>
+    </CollectionCriteria>
+    <DataCollectionPolicy>
+        <Policy>
+            <PolicyName>ALL</PolicyName>
+            <NetworkType>VPN,Trusted,Untrusted</NetworkType>
+            <Type>include</Type>
+            <Fields>350,12333,12334,12335,12336,12337,12338,12339,12340,12341,12342,12343,12344,12345,12346,12347,12351,12352,12353,12356,12357,12358,12360,12361,12362,12363,12365,12366,12367,12368,12369,12370,12371,12372,12373,123591,123592</Fields>
+        </Policy>
+    </DataCollectionPolicy>
+</NVMProfile>
