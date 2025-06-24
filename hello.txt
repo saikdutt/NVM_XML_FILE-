@@ -1,0 +1,88 @@
+sudo log stream --predicate 'process == "com.cisco.anyconnect.macos.acsockext"' --style syslog
+Get-WinEvent -FilterHashtable @{ProviderName='Cisco AnyConnect Secure Mobility Client KDF'} -MaxEvents 1000
+void NVMLogCollectorWindows::collectKDFLogs() {
+    auto logger = std::make_shared<Logger>("logcollector.log");
+    logger->info("Starting KDF log collection...");
+    
+    // Get user's desktop path
+    char desktopPath[MAX_PATH];
+    if (FAILED(SHGetFolderPathA(NULL, CSIDL_DESKTOP, NULL, 0, desktopPath))) {
+        logger->error("Could not determine desktop directory");
+        return;
+    }
+    
+    std::string logFilePath = std::string(desktopPath) + "\\kdf_logs.log";
+    
+    // Construct the PowerShell command to collect KDF logs
+    std::string cmd = "powershell -Command \"Get-WinEvent -FilterHashtable @{ProviderName='Cisco AnyConnect Secure Mobility Client KDF'} "
+                     "-MaxEvents 1000 | Format-List > '" + logFilePath + "'\"";
+    
+    logger->info("Executing log collection command...");
+    int result = system(cmd.c_str());
+    
+    if (result == 0) {
+        logger->info("KDF Logs collected successfully");
+        logger->info("Logs saved to: " + logFilePath);
+    } else {
+        logger->error("Failed to collect KDF logs. Error code: " + std::to_string(result));
+    }
+}
+std::vector<std::pair<std::string, std::string>> commands = {
+    {
+        "powershell -Command \"Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Cisco AnyConnect NVM Agent'} "
+        "-MaxEvents 1000 | Format-List > '" + nvmLogsPath + "'\"",
+        "NVM System Logs"
+    },
+    {
+        "netsh trace start capture=yes tracefile=\"" + packetCapturePath + "\"",
+        "Packet Capture"
+    },
+    {
+        "powershell -Command \"Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Cisco AnyConnect Umbrella'} "
+        "-MaxEvents 1000 | Format-List > '" + umbrellaLogsPath + "'\"",
+        "Umbrella/SWG Logs"
+    }
+};
+
+// To stop the captures, you'll need these commands:
+std::vector<std::pair<std::string, std::string>> killCommands = {
+    {
+        "taskkill /F /IM powershell.exe /FI \"WINDOWTITLE eq NVM*\"",
+        "NVM System Logs"
+    },
+    {
+        "netsh trace stop",
+        "Packet Capture"
+    },
+    {
+        "taskkill /F /IM powershell.exe /FI \"WINDOWTITLE eq Umbrella*\"",
+        "Umbrella/SWG Logs"
+    }
+};
+void NVMLogCollectorWindows::collectDARTLogs() {
+    auto logger = std::make_shared<Logger>("logcollector.log");
+    logger->info("Starting DART log collection...");
+    
+    // Get desktop path
+    char desktopPath[MAX_PATH];
+    if (FAILED(SHGetFolderPathA(NULL, CSIDL_DESKTOP, NULL, 0, desktopPath))) {
+        logger->error("Could not determine desktop directory");
+        return;
+    }
+    
+    std::string dartBundlePath = std::string(desktopPath) + "\\DART_Bundle.zip";
+    
+    // Windows DART CLI path (typically in Program Files)
+    std::string dartCmd = "\"C:\\Program Files (x86)\\Cisco\\Cisco Secure Client\\DART\\dartcli.exe\" "
+                         "-dst \"" + dartBundlePath + "\" -syslogs";
+    
+    logger->info("DART logs are collecting...");
+    int result = system(dartCmd.c_str());
+    logger->info("DART bundle will be saved to: " + dartBundlePath);
+    
+    if (result == 0) {
+        logger->info("DART logs collected successfully");
+    } else {
+        logger->error("Failed to collect DART logs. Error code: " + std::to_string(result));
+    }
+}
